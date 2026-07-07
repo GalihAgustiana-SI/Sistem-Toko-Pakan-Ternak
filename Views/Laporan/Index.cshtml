@@ -1,0 +1,96 @@
+@model List<SistemTokoPakan.Models.Transaksi>
+@{
+    ViewData["Title"] = "Laporan Penjualan";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Laporan Penjualan</h1>
+        <p class="page-subtitle">Ringkasan pendapatan dan riwayat transaksi</p>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar no-print">
+    <div class="filter-group">
+        <div class="form-group inline">
+            <label class="form-label" for="filter-mulai">Mulai</label>
+            <input type="date" class="form-input" id="filter-mulai" value="@ViewBag.Mulai" />
+        </div>
+        <div class="form-group inline">
+            <label class="form-label" for="filter-sampai">Sampai</label>
+            <input type="date" class="form-input" id="filter-sampai" value="@ViewBag.Sampai" />
+        </div>
+        <button class="btn btn-primary" id="btn-filter" onclick="filterLaporan()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
+            TERAPKAN
+        </button>
+    </div>
+    <button class="btn btn-secondary" id="btn-print" onclick="window.print()">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+        </svg>
+        CETAK LAPORAN
+    </button>
+</div>
+
+<!-- Summary Cards -->
+<div class="report-summary">
+    <div class="report-summary-card">
+        <div class="report-summary-label">Total Pendapatan</div>
+        <div class="report-summary-value">Rp @String.Format("{0:N0}", ViewBag.TotalPendapatan)</div>
+    </div>
+    <div class="report-summary-card">
+        <div class="report-summary-label">Jumlah Transaksi</div>
+        <div class="report-summary-value">@ViewBag.TotalTransaksi</div>
+    </div>
+</div>
+
+<!-- Ledger Table -->
+<div class="card">
+    <div class="card-body no-padding">
+        @if (Model.Count > 0)
+        {
+            <table class="data-table" id="laporan-table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>No. Struk</th>
+                        <th>Item</th>
+                        <th class="text-right">Total (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var trx in Model)
+                    {
+                        var items = string.Join(", ", trx.Details.Select(d => $"{d.NamaPakan} x{d.Jumlah}"));
+                        <tr>
+                            <td class="text-muted">@trx.Tanggal.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="font-medium">@trx.NoStruk</td>
+                            <td class="text-sm">@items</td>
+                            <td class="text-right font-medium">Rp @String.Format("{0:N0}", trx.TotalHarga)</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="table-footer-row">
+                        <td colspan="3" class="text-right font-bold">Total Pendapatan</td>
+                        <td class="text-right font-bold">Rp @String.Format("{0:N0}", ViewBag.TotalPendapatan)</td>
+                    </tr>
+                </tfoot>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state large">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                <p class="empty-title">Tidak ada data penjualan</p>
+                <p>Tidak ada data penjualan pada rentang tanggal ini</p>
+            </div>
+        }
+    </div>
+</div>

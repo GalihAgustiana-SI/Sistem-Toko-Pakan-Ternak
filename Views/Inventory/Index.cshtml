@@ -1,0 +1,162 @@
+@model List<SistemTokoPakan.Models.Produk>
+@{
+    ViewData["Title"] = "Stok Pakan";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Stok Pakan</h1>
+        <p class="page-subtitle">Kelola katalog produk pakan ternak</p>
+    </div>
+</div>
+
+<!-- Action Header -->
+<div class="action-header">
+    <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="search-input" id="inventory-search" placeholder="Cari produk..." value="@ViewBag.Search" />
+    </div>
+    <button class="btn btn-primary" id="btn-tambah-produk" onclick="openAddModal()">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        TAMBAH PRODUK
+    </button>
+</div>
+
+<!-- Data Table -->
+<div class="card">
+    <div class="card-body no-padding">
+        @if (Model.Count > 0)
+        {
+            <table class="data-table" id="inventory-table">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Nama Pakan</th>
+                        <th>Kategori</th>
+                        <th class="text-center">Stok (Karung)</th>
+                        <th class="text-right">Harga Jual</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr id="row-@item.Id">
+                            <td class="font-mono">@item.SKU</td>
+                            <td class="font-medium">@item.NamaPakan</td>
+                            <td>
+                                <span class="badge badge-category">@item.Kategori</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="@(item.Stok < 5 ? "text-accent font-bold" : "")">@item.Stok</span>
+                            </td>
+                            <td class="text-right">Rp @String.Format("{0:N0}", item.HargaJual)</td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <button class="btn-icon-action edit" onclick="openEditModal(@item.Id)" title="Edit">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="btn-icon-action delete" onclick="confirmDelete(@item.Id, '@item.NamaPakan')" title="Hapus">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state large">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                <p class="empty-title">Katalog pakan kosong</p>
+                <p>Tambah produk pertama Anda.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add/Edit Product Modal -->
+<div class="modal-overlay" id="product-modal" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modal-title">Tambah Produk</h3>
+            <button class="modal-close" onclick="closeProductModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="produk-id" value="0" />
+            <div class="form-group">
+                <label class="form-label" for="produk-sku">SKU</label>
+                <input type="text" class="form-input" id="produk-sku" placeholder="Contoh: PKN-009" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="produk-nama">Nama Pakan</label>
+                <input type="text" class="form-input" id="produk-nama" placeholder="Contoh: Pur Babi 50kg" />
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="produk-kategori">Kategori</label>
+                    <select class="form-input" id="produk-kategori">
+                        <option value="">Pilih Kategori</option>
+                        <option value="Babi">Babi</option>
+                        <option value="Sapi">Sapi</option>
+                        <option value="Ayam">Ayam</option>
+                        <option value="Ikan">Ikan</option>
+                        <option value="Kambing">Kambing</option>
+                        <option value="Umum">Umum</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="produk-stok">Stok (Karung)</label>
+                    <input type="number" class="form-input" id="produk-stok" placeholder="0" min="0" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="produk-harga">Harga Jual (Rp)</label>
+                <input type="number" class="form-input" id="produk-harga" placeholder="0" min="0" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeProductModal()">BATAL</button>
+            <button class="btn btn-primary" id="btn-save-produk" onclick="saveProduct()">SIMPAN</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="delete-modal" style="display:none;">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <h3 class="modal-title">Konfirmasi Hapus</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>Apakah Anda yakin ingin menghapus <strong id="delete-product-name"></strong>?</p>
+            <p class="text-muted text-sm">Tindakan ini tidak bisa dibatalkan.</p>
+            <input type="hidden" id="delete-product-id" />
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDeleteModal()">BATAL</button>
+            <button class="btn btn-danger" onclick="deleteProduct()">HAPUS</button>
+        </div>
+    </div>
+</div>

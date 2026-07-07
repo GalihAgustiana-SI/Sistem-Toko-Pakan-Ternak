@@ -1,0 +1,133 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">Ringkasan operasional harian Anda</p>
+</div>
+
+<!-- Metric Cards -->
+<div class="metric-grid">
+    <div class="metric-card" id="metric-revenue">
+        <div class="metric-label">Pendapatan Hari Ini</div>
+        <div class="metric-value">Rp @String.Format("{0:N0}", ViewBag.PendapatanHariIni)</div>
+        <div class="metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+        </div>
+    </div>
+    <div class="metric-card" id="metric-transactions">
+        <div class="metric-label">Total Transaksi</div>
+        <div class="metric-value">@ViewBag.TotalTransaksiHariIni</div>
+        <div class="metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+        </div>
+    </div>
+    <div class="metric-card" id="metric-products">
+        <div class="metric-label">Total Produk</div>
+        <div class="metric-value">@ViewBag.TotalProduk</div>
+        <div class="metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Split: Low Stock + Recent Transactions -->
+<div class="dashboard-split">
+    <!-- Low Stock Alerts -->
+    <div class="card" id="low-stock-panel">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg class="card-title-icon accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Peringatan Stok
+            </h2>
+        </div>
+        <div class="card-body">
+            @{
+                var stokRendah = ViewBag.StokRendah as List<SistemTokoPakan.Models.Produk>;
+            }
+            @if (stokRendah != null && stokRendah.Count > 0)
+            {
+                <div class="stock-alert-list">
+                    @foreach (var item in stokRendah)
+                    {
+                        <div class="stock-alert-item">
+                            <div class="stock-alert-info">
+                                <span class="stock-alert-name">@item.NamaPakan</span>
+                                <span class="stock-alert-sku">@item.SKU</span>
+                            </div>
+                            <span class="stock-alert-badge @(item.Stok <= 2 ? "critical" : "warning")">
+                                @item.Stok karung
+                            </span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <p>Semua stok dalam kondisi aman</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="card" id="recent-transactions-panel">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg class="card-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Transaksi Terakhir
+            </h2>
+        </div>
+        <div class="card-body">
+            @{
+                var transaksiTerakhir = ViewBag.TransaksiTerakhir as List<SistemTokoPakan.Models.Transaksi>;
+            }
+            @if (transaksiTerakhir != null && transaksiTerakhir.Count > 0)
+            {
+                <table class="data-table compact">
+                    <thead>
+                        <tr>
+                            <th>No. Struk</th>
+                            <th>Waktu</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var trx in transaksiTerakhir)
+                        {
+                            <tr>
+                                <td class="font-medium">@trx.NoStruk</td>
+                                <td class="text-muted">@trx.Tanggal.ToString("HH:mm")</td>
+                                <td class="text-right">Rp @String.Format("{0:N0}", trx.TotalHarga)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <p>Belum ada transaksi hari ini</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

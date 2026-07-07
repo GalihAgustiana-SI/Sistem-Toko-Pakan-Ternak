@@ -1,0 +1,154 @@
+@model List<SistemTokoPakan.Models.Produk>
+@{
+    ViewData["Title"] = "Kasir";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Kasir</h1>
+        <p class="page-subtitle">Point of Sale — Transaksi cepat dan akurat</p>
+    </div>
+</div>
+
+<div class="pos-layout">
+    <!-- Left: Product Grid (60%) -->
+    <div class="pos-products">
+        <div class="pos-products-header">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" class="search-input" id="pos-search" placeholder="Cari pakan..." />
+            </div>
+        </div>
+        <div class="product-grid" id="product-grid">
+            @foreach (var item in Model)
+            {
+                <div class="product-card" id="product-card-@item.Id"
+                     data-id="@item.Id"
+                     data-nama="@item.NamaPakan"
+                     data-harga="@item.HargaJual"
+                     data-stok="@item.Stok"
+                     onclick="addToCart(@item.Id, '@item.NamaPakan.Replace("'", "\\'")' , @item.HargaJual, @item.Stok)">
+                    <div class="product-card-name">@item.NamaPakan</div>
+                    <div class="product-card-price">Rp @String.Format("{0:N0}", item.HargaJual)</div>
+                    <div class="product-card-stock">
+                        <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        @item.Stok karung
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right: Cart (40%) -->
+    <div class="pos-cart" id="pos-cart">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <svg class="cart-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+                </svg>
+                Keranjang
+            </h2>
+            <button class="btn-text-action" id="btn-clear-cart" onclick="clearCart()" style="display:none;">
+                Kosongkan
+            </button>
+        </div>
+
+        <div class="cart-items" id="cart-items">
+            <div class="empty-state cart-empty" id="cart-empty">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+                </svg>
+                <p>Keranjang Kosong</p>
+            </div>
+        </div>
+
+        <div class="cart-footer" id="cart-footer" style="display:none;">
+            <div class="cart-total">
+                <span class="cart-total-label">Total</span>
+                <span class="cart-total-value" id="cart-total-value">Rp 0</span>
+            </div>
+            <button class="btn btn-primary btn-block" id="btn-proses-bayar" onclick="openPaymentModal()">
+                PROSES PEMBAYARAN
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="payment-modal" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Pembayaran</h3>
+            <button class="modal-close" onclick="closePaymentModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="payment-summary">
+                <div class="payment-row">
+                    <span>Total Belanja</span>
+                    <span class="payment-total" id="payment-total">Rp 0</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="jumlah-bayar">Jumlah Bayar (Rp)</label>
+                <input type="number" class="form-input form-input-lg" id="jumlah-bayar" placeholder="0" min="0" autofocus />
+            </div>
+            <div class="payment-change" id="payment-change-section" style="display:none;">
+                <div class="payment-row">
+                    <span>Kembalian</span>
+                    <span class="payment-kembalian" id="payment-kembalian">Rp 0</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePaymentModal()">BATAL</button>
+            <button class="btn btn-primary" id="btn-cetak-struk" onclick="processCheckout()">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                CETAK STRUK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Template (hidden, used for printing) -->
+<div id="receipt-template" style="display:none;">
+    <div class="receipt" id="receipt-content">
+        <div class="receipt-header">
+            <h2 class="receipt-brand">Harvest Organic</h2>
+            <p class="receipt-tagline">The Farmer's Choice</p>
+            <div class="receipt-divider"></div>
+        </div>
+        <div class="receipt-info">
+            <p>No. Struk: <span id="receipt-no"></span></p>
+            <p>Tanggal: <span id="receipt-date"></span></p>
+        </div>
+        <div class="receipt-divider"></div>
+        <table class="receipt-table" id="receipt-items">
+            <thead>
+                <tr>
+                    <th style="text-align:left;">Item</th>
+                    <th style="text-align:center;">Qty</th>
+                    <th style="text-align:right;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="receipt-divider"></div>
+        <div class="receipt-totals">
+            <p><strong>Total: <span id="receipt-total"></span></strong></p>
+            <p>Bayar: <span id="receipt-bayar"></span></p>
+            <p>Kembali: <span id="receipt-kembali"></span></p>
+        </div>
+        <div class="receipt-divider"></div>
+        <p class="receipt-footer">Terima kasih atas pembelian Anda!</p>
+    </div>
+</div>
